@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Services</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  </head>
+  <body>
+    <h2>Services</h2>
+    <nav id="mainNav"></nav>
+    <div id="servicesList"></div>
+    <div id="adminAddService" style="display: none">
+      <h3>Add Service (Admin Only)</h3>
+      <form id="createServiceForm">
+        <label>Name:</label>
+        <input type="text" id="serviceName" required /><br />
+        <label>Description:</label>
+        <textarea id="serviceDescription"></textarea><br />
+        <label>Duration (minutes):</label>
+        <input type="number" id="serviceDuration" required /><br />
+        <label>Price:</label>
+        <input type="number" id="servicePrice" step="0.01" required /><br />
+        <button type="submit">Create Service</button>
+      </form>
+    </div>
+    <script>
+      const role = (function getUserRole() {
+        const token = localStorage.getItem('token');
+        if (!token) return null;
+        try {
+          return JSON.parse(atob(token.split('.')[1])).role;
+        } catch (e) {
+          return null;
+        }
+      })();
+
+      if (role === 'admin') {
+        document.getElementById('adminAddService').style.display = 'block';
+      }
+
+      async function fetchServices() {
+        try {
+          const res = await axios.get('/api/services');
+          const services = res.data;
+          const servicesDiv = document.getElementById('servicesList');
+          servicesDiv.innerHTML = services
+            .map(
+              (s) => `
+             <div>
+               <strong>${s.name}</strong><br />
+               ${s.description}<br />
+               Duration: ${s.duration} mins | Price: Rs.${s.price}
+             </div>
+             <hr />
+           `
+            )
+            .join('');
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      document
+        .getElementById('createServiceForm')
+        .addEventListener('submit', async (e) => {
+          e.preventDefault();
+          try {
+            const token = localStorage.getItem('token');
+            const name = document.getElementById('serviceName').value;
+            const description =
+              document.getElementById('serviceDescription').value;
+            const duration = document.getElementById('serviceDuration').value;
+            const price = document.getElementById('servicePrice').value;
+            const res = await axios.post(
+              '/api/services',
+              { name, description, duration, price },
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: 'Bearer ' + token,
+                },
+              }
+            );
+            alert(res.data.message || 'Service created');
+            fetchServices();
+          } catch (error) {
+            console.error(error);
+            alert('Service creation failed');
+          }
+        });
+
+      fetchServices();
+    </script>
+    <script src="app.js"></script>
+  </body>
+</html>

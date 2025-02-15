@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Book Appointment</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  </head>
+  <body>
+    <h2>Book an Appointment</h2>
+    <nav id="mainNav"></nav>
+    <form id="bookAppointmentForm">
+      <label>Service:</label>
+      <select id="serviceSelect" required></select
+      ><br />
+      <label>Staff:</label>
+      <select id="staffSelect" required></select
+      ><br />
+      <label>Date:</label>
+      <input type="date" id="appointmentDate" required /><br />
+      <label>Time:</label>
+      <input type="time" id="appointmentTime" required /><br />
+      <label>Email for confirmation:</label>
+      <input type="email" id="appointmentEmail" required /><br />
+      <label>Payment Info (optional JSON):</label>
+      <input
+        type="text"
+        id="paymentInfo"
+        placeholder='{"mode": "razorpay"}'
+      /><br />
+      <button type="submit">Book Appointment</button>
+    </form>
+    <script>
+      async function loadOptions() {
+        try {
+          // Load services
+          const serviceRes = await axios.get('/api/services');
+          const serviceSelect = document.getElementById('serviceSelect');
+          serviceSelect.innerHTML = serviceRes.data
+            .map((s) => `<option value="${s.id}">${s.name}</option>`)
+            .join('');
+
+          // Load staff
+          const staffRes = await axios.get('/api/staff');
+          const staffSelect = document.getElementById('staffSelect');
+          staffSelect.innerHTML = staffRes.data
+            .map((s) => `<option value="${s.id}">${s.name}</option>`)
+            .join('');
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      async function bookAppointment() {
+        const serviceId = document.getElementById('serviceSelect').value;
+        const staffId = document.getElementById('staffSelect').value;
+        const date = document.getElementById('appointmentDate').value;
+        const time = document.getElementById('appointmentTime').value;
+        const email = document.getElementById('appointmentEmail').value;
+        let paymentInfo = document.getElementById('paymentInfo').value;
+        try {
+          paymentInfo = JSON.parse(paymentInfo);
+        } catch (err) {
+          paymentInfo = {};
+        }
+        const token = localStorage.getItem('token');
+        try {
+          const res = await axios.post(
+            '/api/appointments',
+            { serviceId, staffId, date, time, email, paymentInfo },
+            { headers: { Authorization: 'Bearer ' + token } }
+          );
+          const result = res.data;
+          if (result.razorpayOrder) {
+            const options = {
+              key: 'rzp_test_b7p17DaCbmsO02',
+              amount: result.razorpayOrder.amount,
+              currency: result.razorpayOrder.currency,
+              name: 'Salon Appointment Booking',
+              description: 'Test Transaction',
+              order_id: result.razorpayOrder.id,
+              handler: function (response) {
+                alert('Payment successful: ' + response.razorpay_payment_id);
+              },
+              prefill: {
+                email,
+              },
+              theme: {
+                color: '#F37254',
+              },
+            };
+            const rzp = new Razorpay(options);
+            rzp.open();
+          } else {
+            alert(result.message || 'Booking failed');
+          }
+        } catch (error) {
+          console.error(error);
+          alert('Booking failed');
+        }
+      }
+
+      document
+        .getElementById('bookAppointmentForm')
+        .addEventListener('submit', (e) => {
+          e.preventDefault();
+          bookAppointment();
+        });
+
+      loadOptions();
+    </script>
+    <script src="app.js"></script>
+  </body>
+</html>

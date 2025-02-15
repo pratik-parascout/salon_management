@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Manage Staff</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script>
+      function getUserRole() {
+        const token = localStorage.getItem('token');
+        if (!token) return null;
+        try {
+          return JSON.parse(atob(token.split('.')[1])).role;
+        } catch (e) {
+          return null;
+        }
+      }
+      if (getUserRole() !== 'admin') {
+        alert('Access denied. Admins only.');
+        window.location.href = 'dashboard.html';
+      }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  </head>
+  <body>
+    <h2>Staff Management (Admin Only)</h2>
+    <nav id="mainNav"></nav>
+    <div id="staffList"></div>
+    <h3>Add New Staff</h3>
+    <form id="addStaffForm">
+      <label>Name:</label>
+      <input type="text" id="staffName" required /><br />
+      <label>Specialization:</label>
+      <input type="text" id="staffSpecialization" /><br />
+      <label>Availability (JSON format):</label>
+      <textarea
+        id="staffAvailability"
+        placeholder='["Monday", "Wednesday", "Friday"]'
+      ></textarea
+      ><br />
+      <button type="submit">Add Staff</button>
+    </form>
+    <script>
+      async function fetchStaff() {
+        try {
+          const res = await axios.get('/api/staff');
+          const staff = res.data;
+          const staffDiv = document.getElementById('staffList');
+          staffDiv.innerHTML = staff
+            .map(
+              (s) => `
+             <div>
+               <strong>${s.name}</strong> - ${s.specialization}<br />
+               Availability: ${JSON.stringify(s.availability)}
+             </div>
+             <hr />
+           `
+            )
+            .join('');
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      document
+        .getElementById('addStaffForm')
+        .addEventListener('submit', async (e) => {
+          e.preventDefault();
+          try {
+            const token = localStorage.getItem('token');
+            const name = document.getElementById('staffName').value;
+            const specialization = document.getElementById(
+              'staffSpecialization'
+            ).value;
+            let availability;
+            try {
+              availability = JSON.parse(
+                document.getElementById('staffAvailability').value
+              );
+            } catch (err) {
+              availability = document.getElementById('staffAvailability').value;
+            }
+            const res = await axios.post(
+              '/api/staff',
+              { name, specialization, availability },
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: 'Bearer ' + token,
+                },
+              }
+            );
+            alert(res.data.message || 'Staff added');
+            fetchStaff();
+          } catch (error) {
+            console.error(error);
+            alert('Staff addition failed');
+          }
+        });
+
+      fetchStaff();
+    </script>
+    <script src="app.js"></script>
+  </body>
+</html>
