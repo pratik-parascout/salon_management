@@ -35,7 +35,7 @@ pipeline {
             steps {
                 dir("${WORKSPACE}") {
                     sh 'git pull origin main'
-                    sh 'pm2 restart 0 || pm2 start server'
+                    sh 'pm2 restart 0 || pm2 start server.js'
                 }
             }
         }
