@@ -8,25 +8,7 @@
   <body>
     <h2>Dashboard</h2>
     <div id="profile"></div>
-    <script>
-      async function fetchProfile() {
-        try {
-          const token = localStorage.getItem('token');
-          const res = await axios.get('/api/profile', {
-            headers: { Authorization: 'Bearer ' + token },
-          });
-          const data = res.data;
-          document.getElementById('profile').innerText = JSON.stringify(
-            data,
-            null,
-            2
-          );
-        } catch (error) {
-          console.error(error);
-        }
-      }
-      fetchProfile();
-    </script>
-    <script src="app.js"></script>
   </body>
+  <script src="js/app.js" defer></script>
+  <script src="js/dashboard.js" defer></script>
 </html>

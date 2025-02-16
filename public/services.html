@@ -23,74 +23,7 @@
         <button type="submit">Create Service</button>
       </form>
     </div>
-    <script>
-      const role = (function getUserRole() {
-        const token = localStorage.getItem('token');
-        if (!token) return null;
-        try {
-          return JSON.parse(atob(token.split('.')[1])).role;
-        } catch (e) {
-          return null;
-        }
-      })();
-
-      if (role === 'admin') {
-        document.getElementById('adminAddService').style.display = 'block';
-      }
-
-      async function fetchServices() {
-        try {
-          const res = await axios.get('/api/services');
-          const services = res.data;
-          const servicesDiv = document.getElementById('servicesList');
-          servicesDiv.innerHTML = services
-            .map(
-              (s) => `
-             <div>
-               <strong>${s.name}</strong><br />
-               ${s.description}<br />
-               Duration: ${s.duration} mins | Price: Rs.${s.price}
-             </div>
-             <hr />
-           `
-            )
-            .join('');
-        } catch (error) {
-          console.error(error);
-        }
-      }
-
-      document
-        .getElementById('createServiceForm')
-        .addEventListener('submit', async (e) => {
-          e.preventDefault();
-          try {
-            const token = localStorage.getItem('token');
-            const name = document.getElementById('serviceName').value;
-            const description =
-              document.getElementById('serviceDescription').value;
-            const duration = document.getElementById('serviceDuration').value;
-            const price = document.getElementById('servicePrice').value;
-            const res = await axios.post(
-              '/api/services',
-              { name, description, duration, price },
-              {
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: 'Bearer ' + token,
-                },
-              }
-            );
-            alert(res.data.message || 'Service created');
-            fetchServices();
-          } catch (error) {
-            console.error(error);
-            alert('Service creation failed');
-          }
-        });
-
-      fetchServices();
-    </script>
-    <script src="app.js"></script>
+    <script src="js/app.js" defer></script>
+    <script src="js/services.js" defer></script>
   </body>
 </html>
