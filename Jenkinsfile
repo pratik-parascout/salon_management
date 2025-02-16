@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        APP_DIR = '/home/ec2-user/salon_management'
+        APP_DIR = "${WORKSPACE}"
     }
 
     stages {
@@ -29,7 +29,7 @@ pipeline {
             steps {
                 dir("${APP_DIR}") {
                     sh 'git pull origin main'
-                    sh 'pm2 restart server.js'
+                    sh 'pm2 restart 0  || pm2 start server.js'
                 }
             }
         }
