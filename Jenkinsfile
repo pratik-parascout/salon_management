@@ -1,11 +1,24 @@
 pipeline {
     agent any
 
-    environment {
-        APP_DIR = "${WORKSPACE}"
-    }
-
     stages {
+        stage('Load Env Variables') {
+            steps {
+                configFileProvider([configFile(fileId: 'my-env', variable: 'MY_ENV_FILE')]) {
+                    script {
+                        def envContent = readFile(MY_ENV_FILE)
+                        def envVars = envContent.split("\n").findAll { line ->
+                            line.trim() && !line.trim().startsWith('#')
+                        }
+                        echo "Loaded env variables: ${envVars}"
+                        
+                        withEnv(envVars) {
+                            echo "Value of VAR1: ${env.VAR1}"
+                        }
+                    }
+                }
+            }
+        }
         stage('Checkout') {
             steps {
                 git url: 'https://github.com/pratik-parascout/salon_management.git', branch: 'main'
@@ -13,23 +26,16 @@ pipeline {
         }
         stage('Install Dependencies') {
             steps {
-                dir("${APP_DIR}") {
+                dir("${WORKSPACE}") {
                     sh 'npm install'
-                }
-            }
-        }
-        stage('Test') {
-            steps {
-                dir("${APP_DIR}") {
-                    echo 'Tests skipped (uncomment npm test if available)'
                 }
             }
         }
         stage('Deploy') {
             steps {
-                dir("${APP_DIR}") {
+                dir("${WORKSPACE}") {
                     sh 'git pull origin main'
-                    sh 'pm2 restart 0  || pm2 start server.js'
+                    sh 'pm2 restart 0 || pm2 start server'
                 }
             }
         }
