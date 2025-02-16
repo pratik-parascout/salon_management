@@ -29,7 +29,7 @@ pipeline {
             steps {
                 dir("${APP_DIR}") {
                     sh 'git pull origin main'
-                    sh 'pm2 restart 0'
+                    sh 'pm2 restart server.js'
                 }
             }
         }
